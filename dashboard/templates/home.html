@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="floating-card mx-auto mt-5" style="max-width: 600px;">
+    <h2 class="mb-4 text-center">Welcome to the Finance Dashboard</h2>
+    {% if user.is_authenticated %}
+        <p class="text-center">You are logged in. Use the navigation menu to access features.</p>
+    {% else %}
+        <p class="text-center">Please log in to access all features and the admin panel.</p>
+    {% endif %}
+</div>
+{% endblock %}
