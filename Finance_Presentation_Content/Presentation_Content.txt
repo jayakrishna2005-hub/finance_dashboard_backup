@@ -1,0 +1,48 @@
+Agenda:
+- Introduction
+- Problem Statement
+- Objectives
+- Existing System
+- Proposed System
+- Hardware & Software Requirements
+
+Introduction:
+The Finance Dashboard is a web-based application developed using Django framework. It is designed to help organizations manage their financial data efficiently, including revenues, expenses, budgets, transactions, and investments. The system provides a user-friendly interface for data entry, visualization, and export functionalities.
+
+Problem Statement:
+Managing financial data manually or using disparate tools can lead to errors, inefficiencies, and lack of real-time insights. Organizations face challenges in tracking expenses, revenues, and budgets accurately, which affects decision-making and financial planning.
+
+Objectives:
+- To develop a centralized platform for managing financial data.
+- To provide secure user authentication and role-based access.
+- To enable CRUD operations on financial models like expenses, revenues, budgets, etc.
+- To offer data export features such as CSV downloads for reporting.
+- To ensure data integrity and security through proper validations and authentication.
+
+Existing System:
+- Financial data is often managed using spreadsheets or multiple disconnected software.
+- Lack of integration leads to data inconsistencies.
+- Manual processes are time-consuming and error-prone.
+- Limited reporting and export capabilities.
+
+Proposed System:
+- A Django-based web application integrating all financial data management.
+- Secure login and user management.
+- Intuitive UI for managing schools, hospitals, professional applications, and financial records.
+- Export functionality for expenses and other data.
+- Real-time data updates and validations.
+
+Hardware & Software Requirements:
+Hardware:
+- A computer or server capable of running Python and Django.
+- Sufficient storage for database and application files.
+- Network connectivity for multi-user access.
+
+Software:
+- Python 3.14 or higher.
+- Django 5.2 framework.
+- MySQL database server (configured on port 8889 or 3306).
+- Web browser for accessing the application.
+- Optional: MAMP or similar for local MySQL server management.
+
+This content is ready for easy copy-paste into your presentation slides.

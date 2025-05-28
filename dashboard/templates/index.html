@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-overlay">
+  <h1 class="mb-4">Finance Dashboard Overview</h1>
+
+  <div class="row">
+    <!-- Example card for Schools -->
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3">
+        <h5>Schools</h5>
+        <p>Number of schools: {{ school_count }}</p>
+        <p>Total students: {{ total_students }}</p>
+        <p>Annual budget sum: ${{ total_school_budget }}</p>
+        <a href="{% url 'school_list' %}" class="btn btn-primary btn-sm">Manage Schools</a>
+      </div>
+    </div>
+
+    <!-- Example card for Hospitals -->
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3">
+        <h5>Hospitals</h5>
+        <p>Number of hospitals: {{ hospital_count }}</p>
+        <p>Total staff: {{ total_beds }}</p>
+        <p>Annual budget sum: ${{ total_hospital_budget }}</p>
+        <a href="{% url 'hospital_list' %}" class="btn btn-primary btn-sm">Manage Hospitals</a>
+      </div>
+    </div>
+
+    <!-- Example card for Professional Applications -->
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3">
+        <h5>Professional Applications</h5>
+        <p>Total applications: {{ application_count }}</p>
+        <p>Pending approvals: {{ pending_approvals }}</p>
+        <a href="{% url 'professional_application_list' %}" class="btn btn-primary btn-sm">Manage Applications</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Cards for financial features -->
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-info text-white">
+        <h5>Revenue</h5>
+        <p>Records: {{ revenue_count }}</p>
+        <a href="{% url 'revenue_list' %}" class="btn btn-light btn-sm">View Revenue</a>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-danger text-white">
+        <h5>Expenses</h5>
+        <p>Records: {{ expense_count }}</p>
+        <a href="{% url 'expense_list' %}" class="btn btn-light btn-sm">View Expenses</a>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-secondary text-white">
+        <h5>Budgets</h5>
+        <p>Records: {{ budget_count }}</p>
+        <a href="{% url 'budget_list' %}" class="btn btn-light btn-sm">View Budgets</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-primary text-white">
+        <h5>Transactions</h5>
+        <p>Records: {{ transaction_count }}</p>
+        <a href="{% url 'transaction_list' %}" class="btn btn-light btn-sm">View Transactions</a>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-success text-white">
+        <h5>Investments</h5>
+        <p>Records: {{ investment_count }}</p>
+        <a href="{% url 'investment_list' %}" class="btn btn-light btn-sm">View Investments</a>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="floating-card p-3 bg-dark text-white">
+        <h5>User Activity Logs</h5>
+        <p>Records: {{ user_activity_log_count }}</p>
+        <a href="{% url 'user_activity_log_list' %}" class="btn btn-light btn-sm">View Logs</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="row mt-5">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          Revenue Over Time
+        </div>
+        <div class="card-body">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white">
+          Expenses Over Time
+        </div>
+        <div class="card-body">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+          Budgets Overview
+        </div>
+        <div class="card-body">
+          <canvas id="budgetChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          Transactions Overview
+        </div>
+        <div class="card-body">
+          <canvas id="transactionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          Investments Overview
+        </div>
+        <div class="card-body">
+          <canvas id="investmentChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pass Django context data to JS variables
+  const revenueLabels = JSON.parse('{{ revenue_labels|escapejs }}');
+  const revenueTotals = JSON.parse('{{ revenue_totals|escapejs }}');
+  const expenseLabels = JSON.parse('{{ expense_labels|escapejs }}');
+  const expenseTotals = JSON.parse('{{ expense_totals|escapejs }}');
+
+  // Update charts with real data
+  document.addEventListener('DOMContentLoaded', function () {
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+      type: 'line',
+      data: {
+        labels: revenueLabels,
+        datasets: [{
+          label: 'Revenue',
+          data: revenueTotals,
+          backgroundColor: 'rgba(54, 162, 235, 0.5)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { display: true, title: { display: true, text: 'Time' } },
+          y: { display: true, title: { display: true, text: 'Amount ($)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+    const expenseChart = new Chart(expenseCtx, {
+      type: 'line',
+      data: {
+        labels: expenseLabels,
+        datasets: [{
+          label: 'Expenses',
+          data: expenseTotals,
+          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { display: true, title: { display: true, text: 'Time' } },
+          y: { display: true, title: { display: true, text: 'Amount ($)' }, beginAtZero: true }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

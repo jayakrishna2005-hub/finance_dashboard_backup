@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}User Activity Log List{% endblock %}
+
+{% block content %}
+<div class="floating-card">
+    <h1>User Activity Logs</h1>
+    <a href="{% url 'user_activity_log_add' %}" class="btn btn-primary mb-3">Add New Log</a>
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.user }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.timestamp }}</td>
+                <td>
+                    <a href="{% url 'user_activity_log_edit' log.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No user activity logs found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

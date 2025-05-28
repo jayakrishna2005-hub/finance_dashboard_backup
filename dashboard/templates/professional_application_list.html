@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Professional Application List{% endblock %}
+
+{% block content %}
+<h1>Professional Application List</h1>
+<a href="{% url 'professional_application_add' %}" class="btn btn-warning mb-3">Add New Application</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Applicant Name</th>
+            <th>Application Date</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for application in applications %}
+        <tr>
+            <td>{{ application.applicant_name }}</td>
+            <td>{{ application.application_date }}</td>
+            <td>{{ application.status }}</td>
+            <td>{{ application.notes }}</td>
+            <td>
+                <a href="{% url 'professional_application_edit' application.pk %}" class="btn btn-sm btn-warning">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No applications found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}School List{% endblock %}
+
+{% block content %}
+<h1>School List</h1>
+<a href="{% url 'school_add' %}" class="btn btn-primary mb-3">Add New School</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Students</th>
+            <th>Budget</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for school in schools %}
+        <tr>
+            <td>{{ school.name }}</td>
+            <td>{{ school.location }}</td>
+            <td>{{ school.student_count }}</td>
+            <td>${{ school.budget }}</td>
+            <td>
+                <a href="{% url 'school_edit' school.pk %}" class="btn btn-sm btn-warning">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No schools found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
