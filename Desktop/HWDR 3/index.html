@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroScript — AI Handwriting Recognition</title>
+  <meta name="description" content="AI-powered handwritten character and digit recognition. Draw, upload images or PDFs to instantly identify letters, numbers, and words using Tesseract LSTM neural network OCR." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- PDF.js for rendering PDF pages to canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+  <!-- Neural network background canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Top Navigation -->
+  <header class="nav-bar">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="url(#grad1)" stroke-width="2"/>
+          <path d="M8 14 Q11 8 14 14 Q17 20 20 14" stroke="url(#grad1)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="nav-title-wrap">
+        <span class="nav-title">NeuroScript</span>
+        <span class="nav-badge">AI</span>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="draw" id="tab-draw">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        Draw
+      </button>
+      <button class="nav-tab" data-tab="upload" id="tab-upload">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        Upload
+      </button>
+      <button class="nav-tab" data-tab="history" id="tab-history">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        History
+      </button>
+      <button class="nav-tab" data-tab="about" id="tab-about">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+        </svg>
+        How It Works
+      </button>
+    </nav>
+
+    <div class="nav-status">
+      <div class="model-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <span>Tesseract LSTM v5</span>
+      </div>
+      <span class="status-dot" id="ai-status-dot"></span>
+      <span class="status-text" id="ai-status-text">Loading AI...</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- ===== DRAW TAB ===== -->
+    <section class="tab-panel active" id="panel-draw">
+      <div class="workspace">
+
+        <!-- Left Panel: Tools -->
+        <aside class="tool-panel">
+          <div class="tool-group">
+            <label class="tool-label">Brush Size</label>
+            <div class="brush-sizes">
+              <button class="brush-btn active" data-size="4" id="brush-4">
+                <span class="dot" style="width:6px;height:6px;"></span>
+              </button>
+              <button class="brush-btn" data-size="8" id="brush-8">
+                <span class="dot" style="width:10px;height:10px;"></span>
+              </button>
+              <button class="brush-btn" data-size="14" id="brush-14">
+                <span class="dot" style="width:16px;height:16px;"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <label class="tool-label">Ink Color</label>
+            <div class="color-swatches">
+              <button class="swatch active" data-color="#ffffff" style="background:#ffffff;" id="color-white"></button>
+              <button class="swatch" data-color="#a5f3fc" style="background:#a5f3fc;" id="color-cyan"></button>
+              <button class="swatch" data-color="#c4b5fd" style="background:#c4b5fd;" id="color-purple"></button>
+              <button class="swatch" data-color="#fde68a" style="background:#fde68a;" id="color-yellow"></button>
+              <button class="swatch eraser-btn" data-color="eraser" id="color-eraser" title="Eraser">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/>
+                  <path d="M6.0 11.0 l7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <label class="tool-label">Mode</label>
+            <div class="mode-btns">
+              <button class="mode-btn active" data-mode="single" id="mode-single">Single Char</button>
+              <button class="mode-btn" data-mode="word" id="mode-word">Word / Text</button>
+            </div>
+          </div>
+
+          <div class="tool-divider"></div>
+
+          <div class="action-btns">
+            <button class="action-btn undo-btn" id="undo-btn" title="Undo">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
+              </svg>
+              Undo
+            </button>
+            <button class="action-btn clear-btn" id="clear-btn" title="Clear">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+              </svg>
+              Clear
+            </button>
+          </div>
+        </aside>
+
+        <!-- Center: Canvas -->
+        <div class="canvas-section">
+          <div class="canvas-header">
+            <span class="canvas-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+              </svg>
+              Drawing Canvas
+            </span>
+            <span class="canvas-hint" id="canvas-hint">Start drawing a character or word...</span>
+          </div>
+          <div class="canvas-wrapper" id="canvas-wrapper">
+            <canvas id="draw-canvas"></canvas>
+            <div class="canvas-overlay" id="canvas-overlay">
+              <div class="overlay-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </div>
+              <p>Draw a letter or number here</p>
+              <span>e.g., A, B, 3, 7, Hello...</span>
+            </div>
+          </div>
+          <div class="canvas-footer">
+            <button class="recognize-btn" id="recognize-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <span>Recognize</span>
+              <div class="btn-shimmer"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <aside class="result-panel">
+          <div class="result-header">
+            <span class="result-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              AI Result
+            </span>
+            <span class="result-powered">Powered by Tesseract OCR</span>
+          </div>
+
+          <!-- Primary result -->
+          <div class="primary-result" id="primary-result">
+            <div class="result-idle">
+              <div class="idle-icon">🧠</div>
+              <p>Draw something and hit<br><strong>Recognize</strong></p>
+            </div>
+          </div>
+
+          <!-- Confidence bar -->
+          <div class="confidence-wrap" id="confidence-wrap" style="display:none;">
+            <div class="conf-label">
+              <span>Confidence</span>
+              <span id="conf-percent">0%</span>
+            </div>
+            <div class="conf-bar">
+              <div class="conf-fill" id="conf-fill"></div>
+            </div>
+          </div>
+
+          <!-- All detected text -->
+          <div class="detected-text-wrap" id="detected-text-wrap" style="display:none;">
+            <label class="tool-label" style="margin-bottom:8px;">Full Detected Text</label>
+            <div class="detected-text-box" id="detected-text-box"></div>
+            <button class="copy-btn" id="copy-btn" title="Copy to clipboard">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+              </svg>
+              Copy Text
+            </button>
+          </div>
+
+          <!-- Alternatives -->
+          <div class="alternatives-wrap" id="alternatives-wrap" style="display:none;">
+            <label class="tool-label" style="margin-bottom:8px;">Possible Characters</label>
+            <div class="alternatives-grid" id="alternatives-grid"></div>
+          </div>
+
+          <!-- Processing spinner -->
+          <div class="processing-wrap" id="processing-wrap" style="display:none;">
+            <div class="spinner-ring"></div>
+            <p class="processing-text">Analyzing handwriting...</p>
+            <span class="processing-sub">Running neural recognition</span>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ===== UPLOAD TAB ===== -->
+    <section class="tab-panel" id="panel-upload">
+      <div class="upload-workspace">
+        <div class="upload-left">
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="drop-zone">
+            <div class="drop-inner" id="drop-inner">
+              <div class="drop-icon">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <h3>Drop your file here</h3>
+              <p>Images: JPG, PNG, BMP, TIFF, WEBP</p>
+              <p style="font-size:12px;margin-top:-6px;">Documents: <strong style="color:#a5b4fc;">PDF</strong> (multi-page supported)</p>
+              <div class="upload-browse-row">
+                <button class="upload-browse-btn" id="browse-btn" type="button">Browse Files</button>
+                <input type="file" id="file-input" accept="image/*,.pdf,application/pdf" style="display:none;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- PDF Page Navigator (shown only for PDFs) -->
+          <div class="pdf-nav" id="pdf-nav" style="display:none;">
+            <span class="pdf-nav-label" id="pdf-page-label">Page 1 of 1</span>
+            <div class="pdf-nav-controls">
+              <button class="pdf-nav-btn" id="pdf-prev-btn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button class="pdf-nav-btn" id="pdf-next-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="pdf-nav-btn" id="pdf-all-btn" title="Recognize all pages">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>
+                All Pages
+              </button>
+            </div>
+          </div>
+
+          <!-- Image Preview -->
+          <div class="image-preview-wrap" id="image-preview-wrap" style="display:none;">
+            <div class="preview-header">
+              <span class="preview-filename" id="preview-filename">image.png</span>
+              <button class="preview-remove-btn" id="preview-remove-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <img id="preview-img" src="" alt="Uploaded image preview" />
+            <button class="recognize-btn" id="upload-recognize-btn" style="margin-top:16px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <span>Recognize Text</span>
+              <div class="btn-shimmer"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Upload Results -->
+        <div class="upload-right">
+          <div class="result-header">
+            <span class="result-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Recognition Output
+            </span>
+            <span class="result-powered">Powered by Tesseract OCR</span>
+          </div>
+
+          <div class="upload-result-idle" id="upload-result-idle">
+            <div class="idle-icon">📄</div>
+            <p>Upload an <strong>image</strong> or <strong>PDF</strong><br>of handwritten text to get started</p>
+            <div class="model-info-box">
+              <span class="model-info-label">🧠 AI Model Used</span>
+              <span class="model-info-name">Tesseract.js v5 — LSTM Neural Network</span>
+              <span class="model-info-desc">Google's open-source OCR • Runs in your browser • Supports A–Z, a–z, 0–9</span>
+            </div>
+          </div>
+
+          <div id="upload-processing" style="display:none;" class="processing-wrap">
+            <div class="spinner-ring"></div>
+            <p class="processing-text">Analyzing file...</p>
+            <span class="processing-sub">Tesseract LSTM OCR engine at work</span>
+          </div>
+
+          <div id="upload-result-content" style="display:none;">
+            <div class="confidence-wrap">
+              <div class="conf-label">
+                <span>Confidence</span>
+                <span id="upload-conf-percent">0%</span>
+              </div>
+              <div class="conf-bar">
+                <div class="conf-fill" id="upload-conf-fill"></div>
+              </div>
+            </div>
+
+            <label class="tool-label" style="margin:16px 0 8px;">Detected Text</label>
+            <div class="detected-text-box large" id="upload-detected-text"></div>
+
+            <div class="upload-result-actions">
+              <button class="copy-btn" id="upload-copy-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy Text
+              </button>
+              <button class="copy-btn" id="upload-download-btn" style="background:rgba(99,102,241,0.15);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Download .txt
+              </button>
+            </div>
+
+            <!-- Word breakdown -->
+            <label class="tool-label" style="margin:20px 0 8px;">Word Breakdown</label>
+            <div class="word-breakdown" id="word-breakdown"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HISTORY TAB ===== -->
+    <section class="tab-panel" id="panel-history">
+      <div class="history-workspace">
+        <div class="history-header-bar">
+          <div>
+            <h2 class="history-title">Recognition History</h2>
+            <p class="history-sub">All your recognized characters and text</p>
+          </div>
+          <button class="action-btn clear-btn" id="clear-history-btn" style="padding:8px 16px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+            </svg>
+            Clear All
+          </button>
+        </div>
+        <div class="history-grid" id="history-grid">
+          <div class="history-empty" id="history-empty">
+            <div class="idle-icon">📋</div>
+            <p>No recognition history yet.<br>Start drawing or uploading to build your history.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS TAB ===== -->
+    <section class="tab-panel" id="panel-about">
+      <div class="about-workspace">
+        <div class="about-hero">
+          <div class="about-hero-badge">How It Works</div>
+          <h1 class="about-hero-title">AI-Powered Handwriting Recognition</h1>
+          <p class="about-hero-sub">Understand the technology behind NeuroScript</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">01</div>
+            <div class="step-icon">✏️</div>
+            <h3>Draw or Upload</h3>
+            <p>Draw on the canvas with mouse/touch, or upload an <strong style="color:#a5b4fc">image</strong> (JPG, PNG, BMP, WEBP) or a <strong style="color:#a5b4fc">PDF</strong> — multi-page PDFs are fully supported.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">02</div>
+            <div class="step-icon">🖼️</div>
+            <h3>Preprocessing</h3>
+            <p>The image/PDF page is upscaled 2×, contrast-boosted, and cleaned — giving the AI model much sharper input for higher accuracy recognition.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">03</div>
+            <div class="step-icon">🧠</div>
+            <h3>Tesseract LSTM Model</h3>
+            <p>Uses <strong style="color:#a5b4fc">Tesseract.js v5</strong> — Google's LSTM (Long Short-Term Memory) neural network OCR model, running entirely in your browser via WebAssembly. No data leaves your device.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">04</div>
+            <div class="step-icon">📊</div>
+            <h3>Confidence Scoring</h3>
+            <p>Each result has a confidence score (0–100%). The LSTM model outputs probability for each character match — higher = more certain.</p>
+          </div>
+        </div>
+
+        <div class="tech-cards">
+          <div class="tech-card">
+            <h3>🔤 What Can It Recognize?</h3>
+            <div class="char-grid">
+              <div class="char-group">
+                <label>Uppercase</label>
+                <div class="char-badges">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</div>
+              </div>
+              <div class="char-group">
+                <label>Lowercase</label>
+                <div class="char-badges">a b c d e f g h i j k l m n o p q r s t u v w x y z</div>
+              </div>
+              <div class="char-group">
+                <label>Digits</label>
+                <div class="char-badges">0 1 2 3 4 5 6 7 8 9</div>
+              </div>
+              <div class="char-group">
+                <label>Punctuation</label>
+                <div class="char-badges">. , ! ? @ # $ % & * ( ) + - = ;</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tech-card">
+            <h3>💡 Tips for Best Results</h3>
+            <ul class="tips-list">
+              <li><span class="tip-badge">✓</span> Write characters clearly and large on the canvas</li>
+              <li><span class="tip-badge">✓</span> Use consistent stroke thickness</li>
+              <li><span class="tip-badge">✓</span> Ensure good contrast in uploaded images or PDFs</li>
+              <li><span class="tip-badge">✓</span> Try "Word/Text" mode for multiple characters</li>
+              <li><span class="tip-badge">✓</span> Dark background with white ink works best</li>
+              <li><span class="tip-badge">✓</span> For PDFs, use the page navigator to scan each page</li>
+              <li><span class="tip-badge">✓</span> Click "All Pages" to recognize an entire PDF at once</li>
+            </ul>
+          </div>
+
+          <div class="tech-card full-width">
+            <h3>⚙️ Technology Stack &amp; AI Model</h3>
+            <div class="model-highlight-box">
+              <div class="model-highlight-icon">🧠</div>
+              <div>
+                <strong>AI Model: Tesseract.js v5 — LSTM Neural Network</strong>
+                <p>Tesseract was originally created by HP Labs and is now open-source, maintained by Google. The v5 engine uses a <em>Long Short-Term Memory (LSTM)</em> recurrent neural network — a type of deep learning model — trained on millions of text samples. It recognises handwritten and printed text in 100+ languages. This app uses the English (eng) model, configured with LSTM-only mode for maximum accuracy on handwriting.</p>
+              </div>
+            </div>
+            <div class="tech-stack-grid">
+              <div class="tech-item">
+                <span class="tech-icon">🌐</span>
+                <div>
+                  <strong>Tesseract.js v5</strong>
+                  <span>LSTM OCR neural network — runs in browser via WebAssembly</span>
+                </div>
+              </div>
+              <div class="tech-item">
+                <span class="tech-icon">🎨</span>
+                <div>
+                  <strong>HTML5 Canvas API</strong>
+                  <span>High-fidelity drawing with pressure simulation</span>
+                </div>
+              </div>
+              <div class="tech-item">
+                <span class="tech-icon">⚡</span>
+                <div>
+                  <strong>WebAssembly (WASM)</strong>
+                  <span>Near-native performance in the browser</span>
+                </div>
+              </div>
+              <div class="tech-item">
+                <span class="tech-icon">🔒</span>
+                <div>
+                  <strong>100% Client-Side</strong>
+                  <span>No data sent to servers — fully private</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    <span id="toast-msg">Copied!</span>
+  </div>
+
+  <!-- Tesseract.js OCR Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- PDF.js worker (classic build for inline use) -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs" type="module"></script>
+  <script src="app.js"></script>
+</body>
+</html>
