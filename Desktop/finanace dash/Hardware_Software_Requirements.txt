@@ -1,0 +1,16 @@
+Hardware and Software Requirements:
+
+Hardware:
+- A computer or server with sufficient processing power and memory to run the Django application smoothly.
+- Adequate storage capacity to hold the database and application files.
+- Reliable network connectivity to support multi-user access and remote usage.
+- Optional peripherals such as backup drives for data security and recovery.
+
+Software:
+- Operating system compatible with Python and Django (e.g., Windows, macOS, Linux).
+- Python 3.14 or higher installed on the system.
+- Django 5.2 web framework for building and running the application.
+- MySQL database server configured and running (commonly on port 8889 for MAMP or 3306 for standard installations).
+- Web browser for accessing the Finance Dashboard interface.
+- Optional tools like MAMP or XAMPP for local MySQL server management and testing.
+- Development tools such as code editors (e.g., VSCode) and version control systems (e.g., Git) for maintenance and updates.

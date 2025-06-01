@@ -1,0 +1,7 @@
+Problem Statement:
+
+In many organizations, financial data management is often fragmented and handled through manual processes or multiple disconnected software tools. This fragmentation leads to data inconsistencies, errors, and delays in generating accurate financial reports. The lack of a centralized system makes it difficult to track revenues, expenses, budgets, and transactions efficiently, resulting in poor financial visibility and decision-making.
+
+Manual data entry and reconciliation are time-consuming and prone to human error, which can compromise the integrity of financial information. Additionally, the absence of real-time data access hinders timely analysis and strategic planning. Organizations face challenges in ensuring data security and controlling access to sensitive financial records.
+
+This project aims to address these issues by developing a unified, secure, and automated Finance Dashboard that consolidates all financial data management into a single platform. The system will enhance accuracy, improve operational efficiency, and provide actionable insights to support better financial governance and organizational growth.
